@@ -2,7 +2,9 @@
 # Desafio Técnico - Intuitive Care
 
 **Candidato:** Tiago Augusto Rodrigues Lima de Souza
+
 **Vaga:** Estágio em Desenvolvimento / Dados
+
 **Data:** Janeiro/2026
 
 Este repositório contém a solução completa para o desafio técnico, abrangendo Engenharia de Dados (ETL), Análise, Banco de Dados e Desenvolvimento Full Stack (Web).
@@ -30,46 +32,51 @@ Este repositório contém a solução completa para o desafio técnico, abrangen
 Realiza a busca dos arquivos na ANS, baixa, processa e consolida os dados.
 ```bash
 python main.py
+```
 Saída: Gera consolidado_despesas.csv e consolidado_despesas.zip.
 
-2. Teste 2: Transformação e Validação
+#### 2. Teste 2: Transformação e Validação
 Aplica regras de negócio, valida CNPJs, enriquece os dados e gera estatísticas.
 
-Bash
+```bash
 python teste2.py
+```
 Saída: Gera despesas_agregadas.csv e Teste_Tiago_Rodrigues.zip.
 
-3. Teste 3: Banco de Dados
+#### 3. Teste 3: Banco de Dados
 Gera o script SQL completo (DDL + INSERTs) para criação do banco.
 
-Bash
+```bash
 python teste3_gerar_sql.py
+```
 Saída: Gera script_banco_dados.sql (pronto para importar em qualquer banco MySQL/PostgreSQL).
 
-4. Teste 4: API e Dashboard
+#### 4. Teste 4: API e Dashboard
 Inicia o servidor Backend e disponibiliza o Frontend.
 
 Inicie a API:
 
-Bash
+```bash
 python -m uvicorn api:app --reload
+```
 Abra o arquivo index.html no seu navegador.
+
 📂 Estrutura do Projeto
-main.py: Crawler da ANS e processamento ETL inicial.
+* main.py: Crawler da ANS e processamento ETL inicial.
 
-teste2.py: Script de validação de dados (Data Quality) e estatística.
+* teste2.py: Script de validação de dados (Data Quality) e estatística.
 
-teste3_gerar_sql.py: Gerador de script SQL (Engenharia de Dados).
+* teste3_gerar_sql.py: Gerador de script SQL (Engenharia de Dados).
 
-api.py: Servidor Backend (FastAPI).
+* api.py: Servidor Backend (FastAPI).
 
-index.html: Dashboard Frontend (Vue.js + Tailwind).
+* index.html: Dashboard Frontend (Vue.js + Tailwind).
 
-script_banco_dados.sql: Dump do banco de dados gerado.
+* script_banco_dados.sql: Dump do banco de dados gerado.
 
-consolidado_despesas.csv: Base de dados processada (Fato).
+* consolidado_despesas.csv: Base de dados processada (Fato).
 
-Relatorio_cadop.csv: Dados cadastrais das operadoras (Dimensão).
+* Relatorio_cadop.csv: Dados cadastrais das operadoras (Dimensão).
 
 🧠 Documentação de Decisões Técnicas (Trade-offs)
 1. Processamento de Dados (ETL)

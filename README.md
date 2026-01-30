@@ -32,7 +32,12 @@ pip install pandas requests beautifulsoup4 fastapi uvicorn
 ```bash
 \venv\Scripts\activate (Windows)
 ```
-ou ```bash source venv/bin/activate (Linux/Mac).```
+ou 
+
+```bash 
+source venv/bin/activate (Linux/Mac).
+```
+
 ### 👣 Execução Passo a Passo
 1️⃣ Teste 1: Web Scraping e ETLRealiza a busca dos arquivos na ANS, baixa, processa e consolida os dados.Bashpython main.py 
 
@@ -46,8 +51,11 @@ ou ```bash source venv/bin/activate (Linux/Mac).```
 
 ✅ Saída: Gera script_banco_dados.sql (pronto para importar em qualquer banco MySQL/PostgreSQL).
 
-4️⃣ Teste 4: API e DashboardInicia o servidor Backend e disponibiliza o Frontend.Inicie a API:Bashpython -m uvicorn api:app --reload
-Acesse o Dashboard:Abra o arquivo index.html no seu navegador (basta dar um duplo clique no arquivo).
+4️⃣ Teste 4: API e Dashboard Inicia o servidor Backend e disponibiliza o Frontend. Inicie a API:
+```bash 
+python -m uvicorn api:app --reload
+```
+Acesse o Dashboard: Abra o arquivo index.html no seu navegador (basta dar um duplo clique no arquivo).
 ### 📂 Estrutura do Projeto
 
 |Arquivo|Descrição|

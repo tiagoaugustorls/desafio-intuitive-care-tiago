@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intuitive Care - Dashboard</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <div id="app" class="container mx-auto p-6">
+        
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-blue-600">Intuitive Care</h1>
+                <p class="text-sm text-gray-500">Monitor de Operadoras de Saúde</p>
+            </div>
+            <div class="text-right">
+                <p class="font-bold text-xl text-green-600">R$ {{ formatMoney(stats.total_geral) }}</p>
+                <p class="text-xs text-gray-400">Total em Despesas (2025)</p>
+            </div>
+        </header>
+
+        <section class="mb-8 bg-white p-6 rounded-lg shadow">
+            <h2 class="text-lg font-semibold mb-4">Top 5 Estados com Maiores Despesas</h2>
+            <div class="h-64">
+                <canvas id="chartUF"></canvas>
+            </div>
+        </section>
+
+        <section class="bg-white p-6 rounded-lg shadow">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                <h2 class="text-lg font-semibold">Lista de Operadoras</h2>
+                
+                <div class="flex gap-2 w-full md:w-auto">
+                    <select 
+                        v-model="limit" 
+                        @change="mudarLimit"
+                        class="border p-2 rounded focus:outline-blue-500 bg-white"
+                    >
+                        <option :value="10">10 por página</option>
+                        <option :value="20">20 por página</option>
+                        <option :value="50">50 por página</option>
+                        <option :value="100">100 por página</option>
+                    </select>
+
+                    <input 
+                        v-model="search" 
+                        @input="debounceSearch"
+                        type="text" 
+                        placeholder="Buscar por Razão Social ou CNPJ..." 
+                        class="border p-2 rounded w-full md:w-80 focus:outline-blue-500"
+                    >
+                </div>
+            </div>
+
+            <div v-if="loading" class="text-center py-10 text-gray-500">
+                <svg class="animate-spin h-8 w-8 text-blue-500 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Carregando dados...
+            </div>
+
+            <div v-else class="overflow-x-auto">
+                <table class="min-w-full table-auto text-sm">
+                    <thead class="bg-blue-50 text-gray-700">
+                        <tr>
+                            <th class="px-4 py-3 text-left">Reg. ANS</th>
+                            <th class="px-4 py-3 text-left">CNPJ</th>
+                            <th class="px-4 py-3 text-left">Razão Social</th>
+                            <th class="px-4 py-3 text-left">UF</th>
+                            <th class="px-4 py-3 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <tr v-for="op in operadoras" :key="op.RegistroANS" class="hover:bg-gray-50 transition">
+                            <td class="px-4 py-2">{{ op.RegistroANS }}</td>
+                            <td class="px-4 py-2">{{ op.CNPJ }}</td>
+                            <td class="px-4 py-2 font-medium text-gray-900">{{ op.RazaoSocial }}</td>
+                            <td class="px-4 py-2">{{ op.UF }}</td>
+                            <td class="px-4 py-2 text-center">
+                                <button @click="verDetalhes(op)" class="text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded text-xs font-bold transition">
+                                    Detalhes
+                                </button>
+                            </td>
+                        </tr>
+                        <tr v-if="operadoras.length === 0">
+                            <td colspan="5" class="text-center py-8 text-gray-400">Nenhuma operadora encontrada.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 flex justify-between items-center border-t pt-4">
+                <span class="text-sm text-gray-500">
+                    Página <strong>{{ page }}</strong> de <strong>{{ totalPages }}</strong> 
+                    (Total: {{ totalRegistros }} registros)
+                </span>
+                <div class="space-x-2">
+                    <button 
+                        @click="mudarPagina(page - 1)" 
+                        :disabled="page === 1"
+                        class="px-4 py-2 border rounded bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >Anterior</button>
+                    <button 
+                        @click="mudarPagina(page + 1)" 
+                        :disabled="page === totalPages"
+                        class="px-4 py-2 border rounded bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >Próxima</button>
+                </div>
+            </div>
+        </section>
+
+        <div v-if="modalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50 transition-opacity">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-fade-in-up">
+                
+                <div class="p-6 border-b bg-gray-50 flex justify-between items-start">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">{{ selectedOp.RazaoSocial }}</h3>
+                        <p class="text-sm text-gray-500">CNPJ: {{ selectedOp.CNPJ }}</p>
+                    </div>
+                    <button @click="modalOpen = false" class="text-gray-400 hover:text-red-500 text-2xl font-bold">&times;</button>
+                </div>
+
+                <div class="p-6 overflow-y-auto">
+                    <div class="grid grid-cols-2 gap-4 mb-6 bg-blue-50 p-4 rounded-lg">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-bold">Registro ANS</p>
+                            <p class="font-medium">{{ selectedOp.RegistroANS }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-bold">Estado (UF)</p>
+                            <p class="font-medium">{{ selectedOp.UF }}</p>
+                        </div>
+                    </div>
+
+                    <h4 class="font-bold mb-3 text-gray-700 flex items-center gap-2">
+                        <span>💰</span> Histórico Financeiro (2025)
+                    </h4>
+                    
+                    <div v-if="loadingDespesas" class="text-center py-6 text-gray-500">
+                        Carregando histórico...
+                    </div>
+                    
+                    <div v-else-if="despesas.length > 0" class="border rounded-lg overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Período</th>
+                                    <th class="px-4 py-2 text-left">Descrição</th>
+                                    <th class="px-4 py-2 text-right">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                <tr v-for="(d, i) in despesas" :key="i">
+                                    <td class="px-4 py-2 whitespace-nowrap">{{ d.Trimestre }}/{{ d.Ano }}</td>
+                                    <td class="px-4 py-2 text-gray-600">{{ d.Descricao }}</td>
+                                    <td class="px-4 py-2 text-right font-bold text-red-600">R$ {{ formatMoney(d['Valor Despesas']) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div v-else class="text-center py-6 bg-gray-50 rounded-lg text-gray-500 italic border border-dashed">
+                        Nenhuma despesa assistencial registrada para este período.
+                    </div>
+                </div>
+
+                <div class="p-4 border-t bg-gray-50 text-right">
+                    <button @click="modalOpen = false" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded text-gray-700 font-medium transition">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                // Estados Reativos
+                const operadoras = ref([]);
+                const stats = ref({ total_geral: 0 });
+                const page = ref(1);
+                const limit = ref(10); // Quantidade por página
+                const totalPages = ref(1);
+                const totalRegistros = ref(0);
+                const search = ref("");
+                const loading = ref(false);
+                
+                // Modal
+                const modalOpen = ref(false);
+                const selectedOp = ref({});
+                const despesas = ref([]);
+                const loadingDespesas = ref(false);
+                let chartInstance = null;
+
+                const API_URL = "http://127.0.0.1:8000/api";
+
+                // Formatador de Moeda
+                const formatMoney = (val) => {
+                    if (!val) return "0,00";
+                    return parseFloat(val).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                };
+
+                // Carregar Operadoras
+                const fetchOperadoras = async () => {
+                    loading.value = true;
+                    try {
+                        // Passa o 'limit' dinâmico para a API
+                        const res = await fetch(`${API_URL}/operadoras?page=${page.value}&limit=${limit.value}&search=${search.value}`);
+                        const data = await res.json();
+                        
+                        if(data.data) {
+                            operadoras.value = data.data;
+                            totalPages.value = data.meta.total_pages;
+                            totalRegistros.value = data.meta.total;
+                        } else {
+                            operadoras.value = [];
+                        }
+                    } catch (e) { 
+                        console.error("Erro ao buscar operadoras:", e);
+                        operadoras.value = [];
+                    }
+                    loading.value = false;
+                };
+
+                // Carregar Estatísticas
+                const fetchStats = async () => {
+                    try {
+                        const res = await fetch(`${API_URL}/estatisticas`);
+                        const data = await res.json();
+                        stats.value = data;
+                        if(data.top_ufs) renderChart(data.top_ufs);
+                    } catch (e) { console.error(e); }
+                };
+
+                const renderChart = (dados) => {
+                    const ctx = document.getElementById('chartUF');
+                    if(chartInstance) chartInstance.destroy();
+                    
+                    chartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: dados.map(d => d.uf),
+                            datasets: [{
+                                label: 'Despesas por Estado (R$)',
+                                data: dados.map(d => d.total),
+                                backgroundColor: '#3B82F6',
+                                borderRadius: 6,
+                                barThickness: 40
+                            }]
+                        },
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            }
+                        }
+                    });
+                };
+
+                // Busca com delay (Debounce)
+                let timeout = null;
+                const debounceSearch = () => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                        page.value = 1;
+                        fetchOperadoras();
+                    }, 500);
+                };
+
+                // Trocar Página
+                const mudarPagina = (novaPagina) => {
+                    if (novaPagina >= 1 && novaPagina <= totalPages.value) {
+                        page.value = novaPagina;
+                        fetchOperadoras();
+                    }
+                };
+
+                // Trocar Limite por Página
+                const mudarLimit = () => {
+                    page.value = 1; // Volta pra primeira página ao mudar o limite
+                    fetchOperadoras();
+                }
+
+                // Abrir Detalhes
+                const verDetalhes = async (op) => {
+                    selectedOp.value = op;
+                    modalOpen.value = true;
+                    despesas.value = [];
+                    loadingDespesas.value = true;
+                    
+                    try {
+                        // Tenta usar o RegistroANS (mais seguro)
+                        const id = op.RegistroANS;
+                        const res = await fetch(`${API_URL}/operadoras/${id}/despesas`);
+                        despesas.value = await res.json();
+                    } catch (e) { 
+                        console.error(e);
+                        despesas.value = [];
+                    }
+                    loadingDespesas.value = false;
+                };
+
+                onMounted(() => {
+                    fetchOperadoras();
+                    fetchStats();
+                });
+
+                return {
+                    operadoras, stats, page, limit, totalPages, totalRegistros, search, loading,
+                    modalOpen, selectedOp, despesas, loadingDespesas,
+                    formatMoney, mudarPagina, mudarLimit, debounceSearch, verDetalhes
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+{
+	"info": {
+		"name": "Intuitive Care Test",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Listar Operadoras",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/operadoras?page=1&limit=10",
+					"protocol": "http",
+					"host": ["127", "0", "0", "1"],
+					"port": "8000",
+					"path": ["api", "operadoras"],
+					"query": [
+						{ "key": "page", "value": "1" },
+						{ "key": "limit", "value": "10" }
+					]
+				}
+			}
+		},
+		{
+			"name": "Buscar Operadora (CNPJ/Registro)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:8000/api/operadoras/316849"
+			}
+		},
+		{
+			"name": "Histórico de Despesas",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:8000/api/operadoras/316849/despesas"
+			}
+		},
+		{
+			"name": "Estatísticas Gerais",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://127.0.0.1:8000/api/estatisticas"
+			}
+		}
+	]
+}

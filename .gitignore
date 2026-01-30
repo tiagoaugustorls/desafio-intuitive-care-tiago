@@ -1,0 +1,17 @@
+# Ambiente Virtual
+venv/
+env/
+
+# Cache do Python
+__pycache__/
+*.py[cod]
+
+# Pastas de downloads temporários
+downloads_ans/
+
+# Arquivos de sistema operacional
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
